@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Rekeningku</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      /* PALET WARNA MODERN BLUE */
+      --primary-blue: #2563eb;      /* Cobalt Blue */
+      --dark-blue: #1e3a8a;         /* Navy Blue */
+      --sky-blue: #0ea5e9;          /* Sky Blue */
+      --bg-light-blue: #f0f7ff;     /* Background Biru Sangat Muda */
+      --accent-emerald: #10b981;    /* Pemasukan */
+      --accent-rose: #f43f5e;       /* Pengeluaran */
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --glass-white: rgba(255, 255, 255, 0.9);
+      --card-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.1), 0 8px 10px -6px rgba(37, 99, 235, 0.05);
+      --app-max-width: 500px; 
+      --header-height: 100px;
+      --nav-height: 85px;
+      --safe-area-bottom: env(safe-area-inset-bottom);
+    }
+
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    
+    body { 
+      font-family: 'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', Arial, sans-serif; 
+      background-color: #dbeafe; /* Biru muda latar belakang luar */
+      color: var(--text-main); 
+      margin: 0; padding: 0;
+      overflow: hidden; 
+      position: fixed; 
+      width: 100%; height: 100%;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .icon { width: 1em; height: 1em; display: inline-block; vertical-align: -0.15em; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .icon-fill { fill: currentColor; stroke: none; }
+
+    #loginPage, #mainApp { 
+      max-width: var(--app-max-width); 
+      margin: 0 auto; 
+      background-color: var(--bg-light-blue);
+      height: 100dvh;
+      width: 100%;
+      box-shadow: 0 0 100px rgba(30, 58, 138, 0.2);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* LOGIN PAGE BLUE */
+    #loginPage { background: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-blue) 100%); justify-content: center; padding: 20px; z-index: 5; }
+    .login-card { background: white; border-radius: 40px; padding: 45px 35px; width: 100%; box-shadow: 0 25px 50px rgba(0,0,0,0.2); }
+
+    .header-section { 
+      position: absolute; top: 0; left: 0; width: 100%; height: var(--header-height);
+      padding: 20px 25px; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px); border-bottom-left-radius: 35px; border-bottom-right-radius: 35px; 
+      box-shadow: 0 4px 20px rgba(37, 99, 235, 0.05); z-index: 1010; display: flex; flex-direction: column; justify-content: center; 
+    }
+    .btn-logout { background: #eff6ff; border: none; color: var(--accent-rose); width: 42px; height: 42px; border-radius: 14px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+    .btn-logout:active { transform: scale(0.9); background: #fee2e2; }
+
+    .scrollable-content {
+      flex: 1; overflow-y: auto; padding: 20px 25px;
+      padding-top: calc(var(--header-height) + 20px); 
+      padding-bottom: calc(var(--nav-height) + var(--safe-area-bottom) + 20px); 
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      z-index: 1;
+    }
+    .scrollable-content::-webkit-scrollbar { display: none; }
+
+    /* HERO CARD BLUE GRADIENT */
+    .hero-card { 
+      background: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-blue) 100%); 
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 30px 25px;
+      border-radius: 35px;
+      box-shadow: 0 20px 40px -10px rgba(37, 99, 235, 0.4);
+      color: white;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 25px;
+    }
+    .hero-card h1 { 
+      font-size: 2.3rem; 
+      letter-spacing: -1.5px; 
+      margin: 15px 0 20px 0;
+      font-weight: 800;
+      color: #ffffff;
+    }
+    
+    .sync-badge { 
+      background: rgba(255, 255, 255, 0.15); color: #ffffff; 
+      font-size: 0.65rem; font-weight: 800; padding: 5px 12px; 
+      border-radius: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .sync-badge svg.active { animation: spin 2s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    .hero-sub-card { background: rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 14px; flex: 1; border: 1px solid rgba(255,255,255,0.05); }
+    .hero-sub-card small { font-size: 0.6rem; font-weight: 700; opacity: 0.8; letter-spacing: 0.5px; display: block; margin-bottom: 4px; }
+    .hero-sub-card b { font-size: 0.95rem; display: block; }
+
+    /* UI Components */
+    .section-title { font-size: 1rem; font-weight: 800; color: var(--dark-blue); margin: 30px 0 15px 0; display: flex; align-items: center; gap: 10px; padding-left: 5px; }
+    
+    .asset-card { 
+      background: #ffffff; 
+      border-radius: 28px; 
+      padding: 20px;
+      border: 1px solid rgba(37, 99, 235, 0.05);
+      box-shadow: var(--card-shadow);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .asset-card:active { transform: scale(0.96); }
+
+    .asset-icon-box { width: 48px; height: 48px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-bottom: 15px; }
+    
+    /* Soft Colors for Asset Icons */
+    .bg-soft-blue { background: #e0f2fe; color: #0369a1; }
+    .bg-soft-indigo { background: #e0e7ff; color: #4338ca; }
+    .bg-soft-emerald { background: #d1fae5; color: #047857; }
+    .bg-soft-rose { background: #ffe4e6; color: #be123c; }
+
+    .asset-label { font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px; }
+    .asset-value { font-size: 1rem; font-weight: 800; color: var(--text-main); }
+
+    /* TRANSAKSI ITEM - PREMIUM BLUE */
+    .tx-item { 
+      background: #ffffff; 
+      border-radius: 24px; 
+      padding: 18px 22px; 
+      margin-bottom: 14px; 
+      display: flex; align-items: center; justify-content: space-between; 
+      border: 1px solid rgba(37, 99, 235, 0.03); 
+      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.05); 
+      cursor: pointer; transition: 0.2s; 
+    }
+    .tx-icon { width: 52px; height: 52px; background: #f1f5f9; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #94a3b8; }
+    .tx-title { font-size: 1rem; font-weight: 800; color: var(--text-main); margin-bottom: 2px; }
+    .tx-meta { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; line-height: 1.4; }
+    .tx-amount { font-size: 1.1rem; font-weight: 800; text-align: right; }
+    
+    .text-emerald { color: var(--accent-emerald) !important; }
+    .text-rose { color: var(--accent-rose) !important; }
+
+    /* Tab Style Premium Blue */
+    .mutasi-filter-card { 
+      background: white; 
+      border-radius: 25px; 
+      padding: 6px; 
+      display: flex; 
+      align-items: center;
+      gap: 5px; 
+      box-shadow: var(--card-shadow); 
+      margin-bottom: 25px; 
+    }
+    .filter-tab { 
+      flex: 1; 
+      text-align: center; 
+      padding: 12px 10px; 
+      border-radius: 20px; 
+      font-size: 0.85rem; 
+      font-weight: 800; 
+      color: #94a3b8; 
+      cursor: pointer; 
+      transition: all 0.3s ease; 
+    }
+    .filter-tab.active { 
+      background: var(--dark-blue); 
+      color: white; 
+      box-shadow: 0 10px 15px -5px rgba(30, 58, 138, 0.4); 
+    }
+
+    /* Bottom Nav Blue */
+    .bottom-nav { 
+      position: absolute; bottom: 0; left: 0; width: 100%; height: calc(var(--nav-height) + var(--safe-area-bottom)); 
+      background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); 
+      display: flex; align-items: center; justify-content: space-around; 
+      border-top: 1px solid rgba(37, 99, 235, 0.1); z-index: 1010; padding-bottom: var(--safe-area-bottom); 
+      border-radius: 35px 35px 0 0;
+    }
+    .nav-item-custom { display: flex; flex-direction: column; align-items: center; color: #cbd5e1; text-decoration: none; font-size: 0.7rem; font-weight: 800; transition: 0.2s; padding: 10px; }
+    .nav-item-custom.active { color: var(--primary-blue); }
+    .nav-item-custom i { font-size: 1.6rem; margin-bottom: 4px; }
+
+    .fab-container { position: absolute; bottom: calc(var(--nav-height) - 15px); left: 50%; transform: translateX(-50%); z-index: 1050; filter: drop-shadow(0 12px 24px rgba(37, 99, 235, 0.4)); pointer-events: auto; }
+    .fab-btn { width: 70px; height: 70px; background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 2.4rem; border: 6px solid white; cursor: pointer; transition: 0.2s; }
+    .fab-btn:active { transform: scale(0.9); }
+
+    /* Modal Styling */
+    .modal-dialog { position: fixed !important; bottom: 0 !important; margin: 0 !important; width: 100% !important; max-width: var(--app-max-width) !important; left: 50% !important; transform: translateX(-50%) !important; z-index: 5001; }
+    .modal-content { border-radius: 40px 40px 0 0 !important; border: none; padding-bottom: calc(20px + var(--safe-area-bottom)); max-height: 92dvh; overflow-y: auto; scrollbar-width: none; box-shadow: 0 -15px 50px rgba(30, 58, 138, 0.15); }
+    .modal-handle { width: 50px; height: 6px; background: #e2e8f0; border-radius: 10px; margin: 15px auto 25px; flex-shrink: 0; }
+    
+    .form-control, .form-select { border-radius: 20px; border: 2px solid #f1f5f9; padding: 15px 20px; font-size: 1rem; background-color: #f8fafc; font-weight: 500; }
+    .form-control:focus, .form-select:focus { border-color: var(--primary-blue); background-color: #fff; box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.1); }
+
+    .swal2-container { z-index: 10000 !important; }
+    #fullPageLoader { display:none; position:fixed; inset:0; background:rgba(255,255,255,0.95); z-index: 9999; justify-content:center; align-items:center; flex-direction:column; backdrop-filter: blur(10px); }
+  </style>
+</head>
+<body>
+
+  <div id="fullPageLoader">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-3 fw-bold small text-primary text-uppercase" style="letter-spacing: 1px;">Sinkronisasi Data...</p>
+  </div>
+
+  <!-- HALAMAN LOGIN -->
+  <div id="loginPage">
+    <div class="login-card text-center">
+      <div class="asset-icon-box bg-soft-blue mx-auto mb-3" style="width: 70px; height: 70px; border-radius: 24px;">
+        <svg class="icon" viewBox="0 0 24 24" style="width:32px;height:32px;color:#0369a1;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="9" x2="12" y2="9.8"/></svg>
+      </div>
+      <h3 class="fw-800 mb-1" style="letter-spacing: -1.5px; font-weight: 800;">Rekeningku</h3>
+      <p class="text-muted small mb-4">Aman & Terpercaya</p>
+      <input type="text" id="username" class="form-control mb-3" placeholder="Username">
+      <input type="password" id="password" class="form-control mb-4" placeholder="Password">
+      <button class="btn btn-primary w-100 rounded-pill py-3 fw-bold shadow-lg" 
+              style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%); border: none; font-size: 1.1rem;"
+              onclick="handleLogin()">Masuk Sekarang</button>
+      <div id="previewLoginInfo" class="mt-3 d-none small text-muted">admin / 26</div>
+    </div>
+  </div>
+
+  <!-- APLIKASI UTAMA -->
+  <div id="mainApp" class="d-none">
+    <div class="header-section">
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="ps-1">
+          <h2 class="fw-bold m-0" id="currentTitle" style="font-size: 1.6rem; letter-spacing: -0.8px; color: var(--dark-blue);">Beranda</h2>
+          <div class="d-flex align-items-center gap-2 mt-1">
+            <div style="width: 8px; height: 8px; background: var(--accent-emerald); border-radius: 50%; box-shadow: 0 0 10px var(--accent-emerald);"></div>
+            <p class="text-muted small fw-bold text-uppercase m-0" id="userGreeting" style="font-size: 0.65rem; letter-spacing: 0.8px;">HALO, SUPER ADMIN</p>
+          </div>
+        </div>
+        <button class="btn-logout shadow-sm" onclick="logout()"><svg class="icon" viewBox="0 0 24 24"><path d="M12 3v8"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg></button>
+      </div>
+    </div>
+
+    <div class="scrollable-content" id="appContentArea">
+      <!-- HALAMAN BERANDA -->
+      <div id="page-home">
+        <div class="hero-card">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="small fw-bold text-uppercase opacity-75" style="font-size: 0.6rem; letter-spacing: 1px;">SALDO BERSIH</span>
+            <div class="sync-badge"><svg class="icon" viewBox="0 0 24 24" id="syncIcon"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><polyline points="20 4 20 9 15 9"/></svg> <span id="syncText">Tersinkron</span></div>
+          </div>
+          <h1 id="homeTotalNet">Rp 0</h1>
+          <div class="d-flex gap-2">
+            <div class="hero-sub-card"><small>TOTAL DOMPET</small><b id="homeTotalWallet">Rp 0</b></div>
+            <div class="hero-sub-card"><small>TOTAL PIUTANG</small><b id="homeTotalPiutang" style="color: #bae6fd;">Rp 0</b></div>
+          </div>
+        </div>
+        <div id="homeMainContent"></div>
+      </div>
+
+      <!-- HALAMAN PORTOFOLIO -->
+      <div id="page-assets" class="d-none">
+        <div class="section-title"><svg class="icon text-primary" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1h1a1 1 0 0 1 1 1v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><circle class="icon-fill" cx="17" cy="13" r="1.4"/></svg> Semua Rekening</div>
+        <div id="assetsContent"></div>
+      </div>
+
+      <!-- HALAMAN LAPORAN -->
+      <div id="page-report" class="d-none">
+        <div class="asset-card mb-3 p-3">
+          <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+              <div class="asset-icon-box bg-soft-blue mb-0"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="16" y1="3" x2="16" y2="7"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m8.5 15 2 2 4-4"/></svg></div>
+              <div>
+                <div class="asset-label" style="font-size: 0.55rem;">PERIODE</div>
+                <div class="fw-800 small" style="font-weight: 800;">Pilih Bulan</div>
+              </div>
+            </div>
+            <input type="month" id="repMonthFilter" class="form-control form-control-sm w-auto border-0 bg-light fw-bold" onchange="renderReport()">
+          </div>
+        </div>
+
+        <div class="asset-card mb-3">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex align-items-center gap-2">
+              <svg class="icon text-primary" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle class="icon-fill" cx="12" cy="12" r="1.4"/></svg>
+              <span class="fw-800 small" style="font-weight: 800;">Target Anggaran</span>
+            </div>
+            <button class="btn btn-dark btn-sm rounded-pill px-3" onclick="editBudget()" style="font-size: 0.65rem; background: var(--dark-blue);">Ubah</button>
+          </div>
+          <div class="row align-items-end mb-2">
+            <div class="col-7">
+              <div class="asset-label">KELUAR BULAN INI</div>
+              <h4 class="fw-bold text-rose m-0" id="repExpTotal" style="font-weight: 800;">Rp 0</h4>
+            </div>
+            <div class="col-5 text-end">
+              <div class="asset-label">BATAS AMAN</div>
+              <div class="fw-bold small" id="repBudgetLimit">Rp 0</div>
+            </div>
+          </div>
+          <div class="progress mb-2" style="height: 12px; border-radius: 10px; background: #e2e8f0;">
+            <div id="budgetProgress" class="progress-bar" role="progressbar" style="width: 0%; border-radius: 10px;"></div>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <div id="budgetWarning" class="small fw-bold" style="font-size: 0.7rem;"></div>
+            <div id="budgetPercent" class="badge bg-light text-primary" style="border-radius: 6px; font-weight: 800;">0%</div>
+          </div>
+        </div>
+
+        <div class="section-title mb-2 mt-4"><svg class="icon text-primary" viewBox="0 0 24 24"><path d="M4 19h16"/><polyline points="4 15 9 9 13 12 20 4"/><polyline points="15 4 20 4 20 9"/></svg> Arus Kas</div>
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <div class="asset-card border-0" style="background: #ecfdf5;">
+              <div class="asset-label text-success" style="font-weight: 800;">PEMASUKAN</div>
+              <div class="fw-bold text-success" id="repIncTotal" style="font-weight: 800;">Rp 0</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="asset-card border-0" style="background: #fff1f2;">
+              <div class="asset-label text-rose" style="font-weight: 800;">PENGELUARAN</div>
+              <div class="fw-bold text-rose" id="repExpTotalCard" style="font-weight: 800;">Rp 0</div>
+            </div>
+          </div>
+        </div>
+        <div class="asset-card mb-4">
+          <canvas id="cashflowChart" style="max-height: 200px;"></canvas>
+        </div>
+
+        <div class="section-title mb-2 mt-4"><svg class="icon text-primary" viewBox="0 0 24 24"><path d="M12 2v10h10a10 10 0 1 1-10-10Z"/><path d="M15 2.5A10 10 0 0 1 21.5 9H15Z"/></svg> Porsi Belanja</div>
+        <div class="asset-card mb-4">
+          <canvas id="donutChart" style="max-height: 250px;"></canvas>
+        </div>
+
+        <button class="btn btn-outline-primary w-100 rounded-pill py-3 fw-bold mb-5" style="border-width: 2px;" onclick="downloadCSV()">
+          <svg class="icon me-2" viewBox="0 0 24 24"><path d="M12 3v10"/><polyline points="8 9 12 13 16 9"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg> Export Laporan (CSV)
+        </button>
+      </div>
+
+      <!-- HISTORY PAGE -->
+      <div id="page-history" class="d-none">
+        <div class="mutasi-filter-card">
+          <div class="filter-tab active" onclick="setHistoryFilter('Semua', this)">Semua</div>
+          <div class="filter-tab" onclick="setHistoryFilter('Pemasukan', this)">Masuk</div>
+          <div class="filter-tab" onclick="setHistoryFilter('Pengeluaran', this)">Keluar</div>
+        </div>
+        <div id="historyContent"></div>
+      </div>
+    </div>
+
+    <!-- FAB -->
+    <div class="fab-container" id="fabContainer">
+      <div class="fab-btn" id="btnAddMain" onclick="openAddModal()">
+        <svg class="icon" viewBox="0 0 24 24" style="width:28px;height:28px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav">
+      <a href="#" class="nav-item-custom active" onclick="showPage('home', this, 'Beranda')"><svg class="icon" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg><span>Home</span></a>
+      <a href="#" class="nav-item-custom" onclick="showPage('assets', this, 'Dompet')"><svg class="icon" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1h1a1 1 0 0 1 1 1v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><circle class="icon-fill" cx="17" cy="13" r="1.4"/></svg><span>Wallet</span></a>
+      <div style="width: 70px;"></div>
+      <a href="#" class="nav-item-custom" onclick="showPage('report', this, 'Analitik')"><svg class="icon" viewBox="0 0 24 24"><line x1="4" y1="20" x2="4" y2="12"/><line x1="10" y1="20" x2="10" y2="5"/><line x1="16" y1="20" x2="16" y2="14"/><line x1="3" y1="20" x2="21" y2="20"/></svg><span>Insight</span></a>
+      <a href="#" class="nav-item-custom" onclick="showPage('history', this, 'Riwayat')"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M4.5 4.5 3 6"/></svg><span>History</span></a>
+    </nav>
+  </div>
+
+  <!-- MODAL TRANSAKSI -->
+  <div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-handle"></div>
+        <div class="modal-body p-4 pt-0">
+          <h4 class="fw-800 mb-4" style="font-weight: 800; letter-spacing: -0.5px;">Catat Transaksi</h4>
+          <form id="txForm">
+            <div class="mb-3">
+              <label class="form-label-custom" style="font-weight: 800;">TANGGAL</label>
+              <input type="date" id="txDate" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label-custom" style="font-weight: 800;">JENIS TRANSAKSI</label>
+              <select id="txType" class="form-select" onchange="updateCategories()">
+                <option value="Pengeluaran">Pengeluaran (-)</option>
+                <option value="Pemasukan">Pemasukan (+)</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label-custom" style="font-weight: 800;">NOMINAL (RP)</label>
+              <input type="number" id="txAmount" class="form-control" placeholder="0" required style="font-size: 1.2rem; font-weight: 800; color: var(--primary-blue);">
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label-custom" style="font-weight: 800;">KATEGORI</label>
+                <select id="txCategory" class="form-select"></select>
+              </div>
+              <div class="col-6">
+                <label class="form-label-custom" style="font-weight: 800;">DARI/KE DOMPET</label>
+                <select id="txAsset" class="form-select"></select>
+              </div>
+            </div>
+            <div class="mb-4">
+              <label class="form-label-custom" style="font-weight: 800;">CATATAN / KETERANGAN</label>
+              <input type="text" id="txNote" class="form-control" placeholder="Opsional (misal: Beli pulsa)">
+            </div>
+            <button type="submit" class="btn btn-primary w-100 rounded-pill py-3 fw-bold shadow-lg mb-3" 
+                    style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%); border: none; font-size: 1.1rem; font-weight: 800;">
+              Simpan Transaksi
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // ======================================================
+    // LOCAL "DATABASE" LAYER (pengganti Google Sheets + Apps Script)
+    // Semua data disimpan di localStorage browser.
+    // ======================================================
+    const LS_KEYS = { USERS: 'hd_users', ASSETS: 'hd_assets', TX: 'hd_tx', BUDGET: 'hd_budget' };
+
+    function initDB() {
+      if (!localStorage.getItem(LS_KEYS.USERS)) {
+        localStorage.setItem(LS_KEYS.USERS, JSON.stringify([
+          { username: 'admin', password: '26', fullname: 'Super Admin', role: 'Admin' }
+        ]));
+      }
+      if (!localStorage.getItem(LS_KEYS.ASSETS)) {
+        const initialAssets = [
+          { id: 1, category: 'Dompet', name: 'Tunai', value: 0 },
+          { id: 2, category: 'Dompet', name: 'Rekening 1', value: 0 },
+          { id: 3, category: 'Dompet', name: 'Rekening 2', value: 0 },
+          { id: 4, category: 'Dompet', name: 'Rekening 3', value: 0 },
+          { id: 5, category: 'Dompet', name: 'E-Wallet', value: 0 },
+          { id: 6, category: 'Hutang', name: 'Hutang Saya', value: 0 },
+          { id: 7, category: 'Piutang', name: 'Piutang Orang', value: 0 },
+          { id: 8, category: 'Investasi', name: 'Emas', value: 0 }
+        ];
+        localStorage.setItem(LS_KEYS.ASSETS, JSON.stringify(initialAssets));
+      }
+      if (!localStorage.getItem(LS_KEYS.TX)) {
+        localStorage.setItem(LS_KEYS.TX, JSON.stringify([]));
+      }
+      if (!localStorage.getItem(LS_KEYS.BUDGET)) {
+        const currentMonth = new Date().toISOString().substring(0, 7);
+        localStorage.setItem(LS_KEYS.BUDGET, JSON.stringify({ [currentMonth]: 5000000 }));
+      }
+    }
+
+    function db_loginUser(username, password) {
+      const users = JSON.parse(localStorage.getItem(LS_KEYS.USERS) || '[]');
+      const found = users.find(u => String(u.username) === String(username) && String(u.password) === String(password));
+      if (found) return { success: true, user: { username: found.username, fullname: found.fullname, role: found.role } };
+      return { success: false, message: 'Kredensial salah!' };
+    }
+
+    function db_getAppData() {
+      const assets = JSON.parse(localStorage.getItem(LS_KEYS.ASSETS) || '[]');
+      const tx = JSON.parse(localStorage.getItem(LS_KEYS.TX) || '[]').slice().reverse();
+      const budgetMap = JSON.parse(localStorage.getItem(LS_KEYS.BUDGET) || '{}');
+      const currentMonth = new Date().toISOString().substring(0, 7);
+      const limit = budgetMap[currentMonth] !== undefined ? Number(budgetMap[currentMonth]) : 5000000;
+      return { success: true, assets, transactions: tx, budgetLimit: limit };
+    }
+
+    function db_updateAssetBalance(assets, name, adjustment) {
+      const idx = assets.findIndex(a => String(a.name).trim() === String(name).trim());
+      if (idx !== -1) assets[idx].value = Number(assets[idx].value || 0) + adjustment;
+    }
+
+    function db_saveTransaction(form) {
+      try {
+        const assets = JSON.parse(localStorage.getItem(LS_KEYS.ASSETS) || '[]');
+        const tx = JSON.parse(localStorage.getItem(LS_KEYS.TX) || '[]');
+
+        const amount = Number(form.amount);
+        const type = form.type;
+        const dompetName = form.assetName;
+        const category = form.category;
+        const dateValue = form.date || new Date().toISOString().slice(0, 10);
+
+        tx.push({
+          id: Date.now(),
+          date: dateValue,
+          type, category, amount,
+          note: form.note || '',
+          assetName: dompetName,
+          created_at: new Date().toISOString()
+        });
+
+        // Urutan update saldo sama seperti versi Apps Script
+        if (type === 'Tambah Hutang (Terima Uang)') {
+          db_updateAssetBalance(assets, dompetName, amount);
+          db_updateAssetBalance(assets, 'Hutang Saya', amount);
+        } else if (type === 'Tambah Piutang (Beri Pinjaman)') {
+          db_updateAssetBalance(assets, dompetName, -amount);
+          db_updateAssetBalance(assets, 'Piutang Orang', amount);
+        } else if (type === 'Bayar Hutang') {
+          db_updateAssetBalance(assets, dompetName, -amount);
+          db_updateAssetBalance(assets, 'Hutang Saya', -amount);
+        } else if (type === 'Terima Pembayaran Piutang') {
+          db_updateAssetBalance(assets, dompetName, amount);
+          db_updateAssetBalance(assets, 'Piutang Orang', -amount);
+        } else if (type === 'Pemasukan') {
+          db_updateAssetBalance(assets, dompetName, amount);
+        } else if (type === 'Pengeluaran') {
+          db_updateAssetBalance(assets, dompetName, -amount);
+        }
+
+        localStorage.setItem(LS_KEYS.ASSETS, JSON.stringify(assets));
+        localStorage.setItem(LS_KEYS.TX, JSON.stringify(tx));
+        return { success: true };
+      } catch (e) {
+        return { success: false, message: e.toString() };
+      }
+    }
+
+    function db_deleteTransaction(id, type, amount, assetName) {
+      try {
+        const assets = JSON.parse(localStorage.getItem(LS_KEYS.ASSETS) || '[]');
+        let tx = JSON.parse(localStorage.getItem(LS_KEYS.TX) || '[]');
+        amount = Number(amount);
+
+        // Balikkan efek saldo yang tercatat saat transaksi dibuat
+        if (type === 'Tambah Hutang (Terima Uang)') {
+          db_updateAssetBalance(assets, assetName, -amount);
+          db_updateAssetBalance(assets, 'Hutang Saya', -amount);
+        } else if (type === 'Tambah Piutang (Beri Pinjaman)') {
+          db_updateAssetBalance(assets, assetName, amount);
+          db_updateAssetBalance(assets, 'Piutang Orang', -amount);
+        } else if (type === 'Bayar Hutang') {
+          db_updateAssetBalance(assets, assetName, amount);
+          db_updateAssetBalance(assets, 'Hutang Saya', amount);
+        } else if (type === 'Terima Pembayaran Piutang') {
+          db_updateAssetBalance(assets, assetName, -amount);
+          db_updateAssetBalance(assets, 'Piutang Orang', amount);
+        } else if (type === 'Pemasukan') {
+          db_updateAssetBalance(assets, assetName, -amount);
+        } else if (type === 'Pengeluaran') {
+          db_updateAssetBalance(assets, assetName, amount);
+        }
+
+        tx = tx.filter(t => String(t.id) !== String(id));
+        localStorage.setItem(LS_KEYS.ASSETS, JSON.stringify(assets));
+        localStorage.setItem(LS_KEYS.TX, JSON.stringify(tx));
+        return { success: true };
+      } catch (e) {
+        return { success: false, message: e.toString() };
+      }
+    }
+
+    function db_updateBudget(newLimit) {
+      try {
+        const budgetMap = JSON.parse(localStorage.getItem(LS_KEYS.BUDGET) || '{}');
+        const currentMonth = new Date().toISOString().substring(0, 7);
+        budgetMap[currentMonth] = Number(newLimit);
+        localStorage.setItem(LS_KEYS.BUDGET, JSON.stringify(budgetMap));
+        return { success: true, newLimit };
+      } catch (e) {
+        return { success: false, message: e.toString() };
+      }
+    }
+
+    // ======================================================
+    // ICON LIBRARY (SVG inline, pengganti Font Awesome)
+    // Tidak bergantung pada font/CDN eksternal -> tidak akan
+    // pernah muncul kotak/tofu box walau offline di WebView APK.
+    // ======================================================
+    const ICON_PATHS = {
+      home: '<path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/>',
+      wallet: '<path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1h1a1 1 0 0 1 1 1v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><circle class="icon-fill" cx="17" cy="13" r="1.4"/>',
+      plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+      power: '<path d="M12 3v8"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/>',
+      sync: '<path d="M20 12a8 8 0 1 1-2.34-5.66"/><polyline points="20 4 20 9 15 9"/>',
+      coins: '<circle cx="9" cy="9" r="5.5"/><circle cx="15" cy="15" r="5.5"/>',
+      bolt: '<polygon class="icon-fill" points="13 2 4 14 11 14 9 22 20 10 13 10 13 2"/>',
+      calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><line x1="16" y1="3" x2="16" y2="7"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m8.5 15 2 2 4-4"/>',
+      target: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle class="icon-fill" cx="12" cy="12" r="1.4"/>',
+      chartLine: '<path d="M4 19h16"/><polyline points="4 15 9 9 13 12 20 4"/><polyline points="15 4 20 4 20 9"/>',
+      chartPie: '<path d="M12 2v10h10a10 10 0 1 1-10-10Z"/><path d="M15 2.5A10 10 0 0 1 21.5 9H15Z"/>',
+      chartBar: '<line x1="4" y1="20" x2="4" y2="12"/><line x1="10" y1="20" x2="10" y2="5"/><line x1="16" y1="20" x2="16" y2="14"/><line x1="3" y1="20" x2="21" y2="20"/>',
+      history: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M4.5 4.5 3 6"/>',
+      exportIco: '<path d="M12 3v10"/><polyline points="8 9 12 13 16 9"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>',
+      phone: '<rect x="7" y="2" width="10" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/>',
+      cash: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><line x1="6" y1="9" x2="6" y2="9.01"/><line x1="18" y1="15" x2="18" y2="15.01"/>',
+      card: '<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>',
+      vault: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="9.5" x2="12" y2="10.3"/>',
+      receive: '<circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M15 9.7c0-1.5-1.4-2.2-3-2.2s-3 .8-3 2 1.4 1.7 3 2 3 .7 3 2.2-1.4 2-3 2-3-.7-3-2.2"/>',
+      give: '<path d="M20.8 4.9a5.3 5.3 0 0 0-7.6 0L12 6.1l-1.2-1.2a5.3 5.3 0 0 0-7.6 7.6L12 21l8.8-8.5a5.3 5.3 0 0 0 0-7.6Z"/>',
+      arrowDown: '<line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/>',
+      arrowUp: '<line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/>'
+    };
+    function ico(name, cls) {
+      return `<svg class="icon ${cls || ''}" viewBox="0 0 24 24">${ICON_PATHS[name] || ''}</svg>`;
+    }
+
+    // --- STATE ---
+    let currentUser = null, dbAssets = [], dbTx = [], activePage = 'home', myChart = null, myDonut = null, budgetLimit = 5000000;
+    let historyFilter = 'Semua', syncTimer = null;
+
+    const categories = {
+      Pemasukan: ["Gaji Utama", "Bonus/Insentif", "Pekerjaan Sampingan (Freelance)", "Penjualan"],
+      Pengeluaran: [
+        "Makan & Minum", "Transportasi", "Tempat Tinggal", "Tagihan Rutin", "Pulsa & Data", 
+        "Langganan", "Belanja (Shopping)", "Hiburan", "Perawatan Diri", "Kesehatan", 
+        "Zakat & Sedekah", "Pajak", "Cicilan/Hutang", "Keluarga"
+      ]
+    };
+
+    // --- UTILS ---
+    function formatIDR(n) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n || 0); }
+    function showFullPageLoading(m) { const l = document.getElementById('fullPageLoader'); if (l) { l.querySelector('p').innerText = m || 'LOADING...'; l.style.display = 'flex'; } }
+    function hideFullPageLoading() { const l = document.getElementById('fullPageLoader'); if (l) l.style.display = 'none'; }
+    function showSectionLoading(c) { const el = document.getElementById(c); if (!el) return; el.innerHTML = '<div class="d-flex flex-column gap-3 p-2"><div class="skeleton-box py-5 w-100"></div><div class="skeleton-box py-4 w-75"></div></div>'; }
+
+    // --- AUTH ---
+    function handleLogin() {
+      const u = document.getElementById('username').value, p = document.getElementById('password').value;
+      if (!u || !p) return Swal.fire('Oops','Lengkapi login','warning');
+      showFullPageLoading('OTENTIKASI...');
+      setTimeout(() => {
+        hideFullPageLoading();
+        const res = db_loginUser(u, p);
+        if (res.success) { currentUser = res.user; checkLoginState(); }
+        else Swal.fire('Gagal', res.message, 'error');
+      }, 500);
+    }
+
+    function checkLoginState() {
+      if (currentUser) { 
+        document.getElementById('loginPage').classList.add('d-none'); 
+        document.getElementById('mainApp').classList.remove('d-none'); 
+        document.getElementById('userGreeting').innerText = 'HALO, ' + currentUser.fullname.toUpperCase();
+        showPage('home', null, 'Beranda'); 
+        startAutoSync();
+      } else { 
+        document.getElementById('loginPage').classList.remove('d-none'); 
+        document.getElementById('mainApp').classList.add('d-none'); 
+        if(syncTimer) clearInterval(syncTimer);
+      }
+    }
+
+    function startAutoSync() {
+      if(syncTimer) clearInterval(syncTimer);
+      syncTimer = setInterval(() => { if(activePage === 'home' || activePage === 'history') fetchData(true); }, 30000);
+    }
+
+    // --- NAVIGATION ---
+    function showPage(p, el, title) {
+      activePage = p;
+      if (title) document.getElementById('currentTitle').innerText = title;
+      document.querySelectorAll('[id^="page-"]').forEach(pg => pg.classList.add('d-none'));
+      document.getElementById('page-'+p).classList.remove('d-none');
+      document.querySelectorAll('.nav-item-custom').forEach(n => n.classList.remove('active'));
+      if (el) el.classList.add('active');
+      fetchData();
+    }
+
+    function fetchData(silent) {
+      const reqPage = activePage;
+      const containerId = (reqPage === 'home' ? 'homeMainContent' : (reqPage === 'assets' ? 'assetsContent' : (reqPage === 'history' ? 'historyContent' : null)));
+      const icon = document.getElementById('syncIcon');
+      if(icon) icon.classList.add('active');
+      if (!silent && containerId) showSectionLoading(containerId);
+
+      setTimeout(() => {
+        if (icon) icon.classList.remove('active');
+        const res = db_getAppData();
+        if (res.success) { dbAssets = res.assets || dbAssets; dbTx = res.transactions || []; budgetLimit = res.budgetLimit || 5000000; renderAll(); }
+      }, 300);
+    }
+
+    function renderAll() {
+      renderDashboardTotals();
+      if (activePage === 'home') renderHome();
+      if (activePage === 'assets') renderAssets();
+      if (activePage === 'report') renderReport();
+      if (activePage === 'history') renderHistory();
+    }
+
+    function renderDashboardTotals() {
+      let wT = 0, dT = 0, pT = 0;
+      dbAssets.forEach(a => {
+        const v = Number(a.value || 0);
+        if (a.category === 'Dompet') wT += v;
+        else if (a.category === 'Hutang') dT += v;
+        else if (a.category === 'Piutang') pT += v;
+      });
+      document.getElementById('homeTotalNet').innerText = formatIDR(wT + pT - dT);
+      document.getElementById('homeTotalWallet').innerText = formatIDR(wT);
+      document.getElementById('homeTotalPiutang').innerText = formatIDR(pT);
+    }
+
+    // --- RENDER FUNCTIONS ---
+    function renderHome() {
+      const wallets = dbAssets.filter(a => a.category === 'Dompet');
+      const hutangs = dbAssets.filter(a => a.category === 'Hutang' || a.category === 'Piutang');
+      
+      const icons = { 'tunai': 'cash', 'rekening 1': 'card', 'rekening 2': 'card', 'rekening 3': 'card', 'e-wallet': 'phone' };
+      const colors = { 'tunai': 'bg-soft-emerald', 'rekening 1': 'bg-soft-blue', 'rekening 2': 'bg-soft-indigo', 'rekening 3': 'bg-soft-rose', 'e-wallet': 'bg-soft-orange' };
+
+      let html = `<div class="section-title">${ico('coins', 'text-primary')} Saldo Akun</div><div class="row g-3 mb-4">`;
+      wallets.map(w => {
+        html += `<div class="col-4"><div class="asset-card"><div class="asset-icon-box ${colors[w.name.toLowerCase()] || 'bg-soft-blue'}">${ico(icons[w.name.toLowerCase()] || 'vault')}</div><div class="asset-label">${w.name}</div><div class="asset-value small" style="font-size:0.8rem">${formatIDR(w.value).replace('Rp', '')}</div></div></div>`;
+      });
+      html += `</div><div class="row g-3 mb-4">`;
+      hutangs.map(h => {
+        const isPiutang = h.category === 'Piutang';
+        html += `<div class="col-6"><div class="asset-card"><div class="asset-icon-box ${isPiutang ? 'bg-soft-emerald' : 'bg-soft-rose'}">${ico(isPiutang ? 'receive' : 'give')}</div><div class="asset-label">${h.name}</div><div class="asset-value small" style="font-weight: 800;">${formatIDR(h.value)}</div></div></div>`;
+      });
+      html += `</div><div class="d-flex justify-content-between align-items-center mb-3"><div class="section-title m-0">${ico('bolt', 'text-warning')} Aktivitas</div><span class="small text-primary fw-bold" onclick="showPage('history', null, 'Mutasi')">Semua</span></div><div class="mb-3">`;
+      
+      dbTx.slice(0, 5).map(t => {
+        const isInc = t.type.includes('Pemasukan') || t.type.includes('Terima');
+        html += `
+          <div class="tx-item">
+            <div class="d-flex align-items-center gap-3">
+              <div class="tx-icon">
+                ${ico(isInc ? 'arrowDown' : 'arrowUp')}
+              </div>
+              <div style="flex:1">
+                <div class="tx-title">${t.category}</div>
+                <div class="tx-meta">${t.note || 'Pencatatan'} • ${t.date}</div>
+              </div>
+            </div>
+            <div class="tx-amount ${isInc ? 'text-emerald' : 'text-rose'}">
+              ${isInc ? '+' : '-'} ${formatIDR(t.amount).replace('Rp', '').trim()}
+            </div>
+          </div>`;
+      });
+      html += `</div>`;
+      document.getElementById('homeMainContent').innerHTML = html || '<div class="text-center py-4 text-muted small">Belum ada transaksi</div>';
+    }
+
+    function renderAssets() {
+      const wallets = dbAssets.filter(a => a.category === 'Dompet');
+      const others = dbAssets.filter(a => a.category !== 'Dompet');
+      let html = `<div class="hero-card mb-4" style="background: var(--glass-white); color: var(--text-main); border: 1px solid #e2e8f0; box-shadow: var(--card-shadow);"><h5 class="fw-800 m-0 mb-3" style="font-weight: 800; color: var(--dark-blue);">Ringkasan Portofolio</h5>`;
+      wallets.map(w => { html += `<div class="d-flex justify-content-between my-3 p-3 rounded-4" style="background: #f8fafc; border: 1px solid #f1f5f9;"><div><b class="d-block">${w.name}</b><small class="text-muted">Dompet Elektronik/Tunai</small></div><b class="text-primary">${formatIDR(w.value)}</b></div>`; });
+      html += `<hr style="opacity: 0.1">`;
+      others.map(i => { html += `<div class="d-flex justify-content-between my-3 p-3 rounded-4" style="background: #f8fafc; border: 1px solid #f1f5f9;"><div><b class="d-block">${i.name}</b><small class="text-muted">${i.category}</small></div><b>${formatIDR(i.value)}</b></div>`; });
+      html += `</div>`;
+      document.getElementById('assetsContent').innerHTML = html;
+    }
+
+    function renderReport() {
+      const filterMonth = document.getElementById('repMonthFilter').value || new Date().toISOString().split('T')[0].substring(0, 7);
+      document.getElementById('repMonthFilter').value = filterMonth;
+
+      let totalInc = 0, totalExp = 0;
+      const categoryData = {};
+      dbTx.forEach(t => {
+        if (t.date.substring(0, 7) === filterMonth) {
+          if (t.type === 'Pemasukan' || t.type.includes('Terima')) totalInc += t.amount;
+          else {
+            totalExp += t.amount;
+            categoryData[t.category] = (categoryData[t.category] || 0) + t.amount;
+          }
+        }
+      });
+
+      document.getElementById('repIncTotal').innerText = formatIDR(totalInc);
+      document.getElementById('repExpTotal').innerText = formatIDR(totalExp);
+      document.getElementById('repExpTotalCard').innerText = formatIDR(totalExp);
+      document.getElementById('repBudgetLimit').innerText = formatIDR(budgetLimit);
+
+      const percent = Math.min(Math.round((totalExp / budgetLimit) * 100), 100);
+      const progressBar = document.getElementById('budgetProgress');
+      const warningText = document.getElementById('budgetWarning');
+      progressBar.style.width = percent + '%';
+      document.getElementById('budgetPercent').innerText = percent + '%';
+
+      if (totalExp > budgetLimit) { progressBar.className = "progress-bar bg-danger"; warningText.innerText = "⚠️ Anggaran Melebihi Batas!"; warningText.className = "small fw-bold text-rose"; }
+      else if (percent > 80) { progressBar.className = "progress-bar bg-warning"; warningText.innerText = "Waspada, Anggaran Menipis."; warningText.className = "small fw-bold text-warning"; }
+      else { progressBar.className = "progress-bar bg-primary"; warningText.innerText = "Pengeluaran Masih Aman."; warningText.className = "small fw-bold text-success"; }
+
+      if (myChart) myChart.destroy();
+      myChart = new Chart(document.getElementById('cashflowChart'), {
+        type: 'bar',
+        data: { labels: ['Masuk', 'Keluar'], datasets: [{ data: [totalInc, totalExp], backgroundColor: ['#10b981', '#f43f5e'], borderRadius: 10 }] },
+        options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } }
+      });
+
+      if (myDonut) myDonut.destroy();
+      myDonut = new Chart(document.getElementById('donutChart'), {
+        type: 'doughnut',
+        data: { labels: Object.keys(categoryData), datasets: [{ data: Object.values(categoryData), backgroundColor: ['#2563eb', '#0ea5e9', '#6366f1', '#f43f5e', '#10b981', '#f59e0b'], borderWidth: 0 }] },
+        options: { cutout: '75%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { weight: 'bold' } } } } }
+      });
+    }
+
+    function renderHistory() {
+      let fil = dbTx; 
+      if (historyFilter !== 'Semua') {
+        fil = dbTx.filter(t => (historyFilter === 'Pemasukan' ? (t.type === 'Pemasukan' || t.type.includes('Terima')) : (t.type === 'Pengeluaran' || t.type.includes('Bayar'))));
+      }
+      
+      const html = fil.map(t => {
+        const isInc = t.type === 'Pemasukan' || t.type.includes('Terima');
+        return `
+          <div class="tx-item" onclick="handleDeleteTx('${t.id}', '${t.type}', ${t.amount}, '${t.assetName}')">
+            <div class="d-flex align-items-center gap-3">
+              <div class="tx-icon">
+                ${ico(isInc ? 'arrowDown' : 'arrowUp')}
+              </div>
+              <div style="flex:1">
+                <div class="tx-title">${t.category}</div>
+                <div class="tx-meta">${t.note || 'Transaksi'} • ${t.assetName}</div>
+              </div>
+            </div>
+            <div class="tx-amount ${isInc ? 'text-emerald' : 'text-rose'}">
+              ${isInc ? '+' : '-'}${formatIDR(t.amount).replace('Rp', '').trim()}
+            </div>
+          </div>`;
+      }).join('');
+      document.getElementById('historyContent').innerHTML = html || '<div class="text-center py-5 text-muted">Belum ada catatan mutasi</div>';
+    }
+
+    function setHistoryFilter(f, el) { historyFilter = f; document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); renderHistory(); }
+
+    // --- FORM LOGIC ---
+    function updateCategories() {
+      const type = document.getElementById('txType').value;
+      const list = categories[type] || [];
+      document.getElementById('txCategory').innerHTML = list.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+    }
+
+    function openAddModal() {
+      const sel = document.getElementById('txAsset');
+      sel.innerHTML = dbAssets.filter(a => a.category === 'Dompet').map(a => `<option value="${a.name}">${a.name}</option>`).join('');
+      document.getElementById('txForm').reset();
+      document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
+      updateCategories();
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('addModal')).show();
+    }
+
+    document.getElementById('txForm').onsubmit = function(e) {
+      e.preventDefault();
+      const p = {
+        date: document.getElementById('txDate').value, type: document.getElementById('txType').value,
+        assetName: document.getElementById('txAsset').value, amount: Number(document.getElementById('txAmount').value),
+        note: document.getElementById('txNote').value, category: document.getElementById('txCategory').value
+      };
+      
+      if (p.amount <= 0) return Swal.fire('Oops','Masukkan nominal yang valid','warning');
+      const selectedAsset = dbAssets.find(a => a.name === p.assetName);
+      if (p.type === 'Pengeluaran' && selectedAsset && p.amount > selectedAsset.value) {
+        return Swal.fire({ icon: 'warning', title: 'Saldo Tidak Cukup', text: `Saldo di ${p.assetName} tidak mencukupi untuk transaksi ini.` });
+      }
+      
+      bootstrap.Modal.getInstance(document.getElementById('addModal')).hide();
+      Swal.fire({ title: 'Menyimpan...', didOpen: () => Swal.showLoading() });
+
+      setTimeout(() => {
+        const res = db_saveTransaction(p);
+        if (res.success) { Swal.fire({icon:'success', title:'Tersimpan', timer:1500, showConfirmButton:false}); fetchData(true); }
+        else Swal.fire('Gagal', res.message, 'error');
+      }, 500);
+    };
+
+    function handleDeleteTx(id, type, amount, assetName) {
+      Swal.fire({ title:'Hapus transaksi?', icon:'warning', showCancelButton:true, confirmButtonColor:'#f43f5e', cancelButtonColor: '#64748b' }).then(r => {
+        if (r.isConfirmed) {
+          Swal.fire({ title:'Menghapus...', didOpen:()=>Swal.showLoading() });
+          setTimeout(() => { db_deleteTransaction(id, type, amount, assetName); Swal.close(); fetchData(true); }, 400);
+        }
+      });
+    }
+
+    function editBudget() {
+      Swal.fire({ title: 'Ubah Anggaran Bulanan', input: 'number', inputValue: budgetLimit, showCancelButton: true }).then(r => {
+        if (r.isConfirmed) {
+          db_updateBudget(r.value);
+          budgetLimit = Number(r.value);
+          renderReport();
+        }
+      });
+    }
+
+    function downloadCSV() {
+      if (dbTx.length === 0) return Swal.fire('Kosong', 'Tidak ada data', 'info');
+      let csv = 'Tanggal,Tipe,Kategori,Nominal,Dompet,Catatan\n';
+      dbTx.forEach(t => { csv += `${t.date},${t.type},${t.category},${t.amount},${t.assetName},"${t.note || ''}"\n`; });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'WealthTracker_Laporan.csv'; a.click();
+    }
+
+    function logout() { currentUser = null; checkLoginState(); }
+    document.addEventListener('DOMContentLoaded', () => {
+      initDB();
+      document.getElementById('previewLoginInfo').classList.remove('d-none');
+      checkLoginState();
+    });
+  </script>
+</body>
+</html>
