@@ -1,0 +1,10 @@
+{
+  "appId": "com.rekeningku.app",
+  "appName": "Rekeningku",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "backgroundColor": "#1e3a8a",
+  "android": {
+    "allowMixedContent": true
+  }
+}
